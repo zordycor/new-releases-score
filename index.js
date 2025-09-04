@@ -1,5 +1,5 @@
-import { PLATFORMS_URLS, FILMAFFINITY_HOME_URL } from './constants.js'
-import { setStealthMode, getPlatformReleasesIds, acceptCookies } from './browserFunctions.js'
+import { FILMAFFINITY_HOME_URL } from './constants.js'
+import { setStealthMode, getNewReleaseData, getLast20PlatformReleasesIds, acceptCookies } from './browserFunctions.js'
 
 (async () => {
   const browser = await setStealthMode()
@@ -8,9 +8,18 @@ import { setStealthMode, getPlatformReleasesIds, acceptCookies } from './browser
   await page.goto(FILMAFFINITY_HOME_URL)
   await acceptCookies(page)
 
-  const platformReleasesIds = await getPlatformReleasesIds(page, 'netflix')
+  const platformReleasesIds = await getLast20PlatformReleasesIds(page, 'netflix')
+  const netflixReleases = []
 
-  console.log(platformReleasesIds)
+  for (let index = 0; index < platformReleasesIds.netflix.length; index++) {
+    const releaseId = platformReleasesIds.netflix[index]
+    const releaseData = await getNewReleaseData(page, releaseId)
+    netflixReleases.push(releaseData)
+  }
+
+  const sortedNetflixReleases = netflixReleases.sort((a, b) => b.movieScore - a.movieScore)
+  const bestReleases = sortedNetflixReleases.filter(release => +release.movieScore > 6.5)
+  console.log(bestReleases)
 
   await browser.close()
 })()

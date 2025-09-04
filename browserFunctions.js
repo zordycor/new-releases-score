@@ -3,6 +3,7 @@ import { chromium } from 'playwright-extra'
 import stealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 export const setStealthMode = async () => {
+  // Trick Cloudflare to think we are a human
   const stealth = stealthPlugin()
   chromium.use(stealth)
   const browser = await chromium.launch({ headless: false })
@@ -28,7 +29,7 @@ export const acceptCookies = async (page) => {
   await acceptCookiesButton.click()
 }
 
-export const getPlatformReleasesIds = async (page, platform) => {
+export const getLast20PlatformReleasesIds = async (page, platform) => {
   await page.goto(PLATFORMS_URLS[platform], { waitUntil: 'domcontentloaded' })
 
   const newReleasesListElement = await page.locator('.row.row-cols-3.row-cols-md-4.g-3.mb-3.movies-row')
@@ -43,12 +44,18 @@ export const getPlatformReleasesIds = async (page, platform) => {
   return { [platform]: releasesArray }
 }
 
-export const getNewReleaseData = async (releases) => {
-  const firstMovieTitle = await releases.locator('.poster-wrap').first().getAttribute('title')
-  const firstMoviePoster = await releases.locator('.img-fluid').first().getAttribute('src')
-  await releases.locator('.more-info').first().click()
-  const firstMovieVoteCount = await releases.locator('.count').first().textContent()
-  const firstMovieScore = await releases.locator('.avg').first().textContent()
+export const getNewReleaseData = async (page, movieId) => {
+  await page.goto(`https://www.filmaffinity.com/es/film${movieId}.html`, { waitUntil: 'domcontentloaded' })
+  const hasScore = await page.locator('#rat-avg-count').isVisible()
 
-  return { firstMovieTitle, firstMoviePoster, firstMovieVoteCount, firstMovieScore }
+  const movieTitle = await page.locator('h1 span').first().textContent()
+  const moviePoster = await page.locator('#movie-main-image-container img').getAttribute('src')
+  const movieVoteCount = hasScore
+    ? await page.locator('#movie-count-rat span').getAttribute('content')
+    : '0'
+  const movieScore = hasScore
+    ? await page.locator('#movie-rat-avg').getAttribute('content')
+    : '0'
+
+  return { movieTitle, moviePoster, movieVoteCount, movieScore }
 }
