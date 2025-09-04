@@ -1,6 +1,8 @@
 import { PLATFORMS_URLS } from './constants.js'
 import { chromium } from 'playwright-extra'
 import stealthPlugin from 'puppeteer-extra-plugin-stealth'
+import FormData from 'form-data'
+import Mailgun from 'mailgun.js'
 
 export const setStealthMode = async () => {
   // Trick Cloudflare to think we are a human
@@ -58,4 +60,27 @@ export const getNewReleaseData = async (page, movieId) => {
     : '0'
 
   return { movieTitle, moviePoster, movieVoteCount, movieScore }
+}
+
+export async function sendSimpleMessage (bestReleases) {
+  const mailgun = new Mailgun(FormData)
+  const mg = mailgun.client({
+    username: 'api',
+    key: process.env.API_KEY
+  })
+  try {
+    const data = await mg.messages.create('sandbox39127f423c10475fb5fb807ce40223b4.mailgun.org', {
+      from: 'Mailgun Sandbox <postmaster@sandbox39127f423c10475fb5fb807ce40223b4.mailgun.org>',
+      to: ['Borja Rodrigo Marti <borjarodrigomarti@gmail.com>'],
+      subject: 'Hello Borja Rodrigo Marti',
+      text: 'Your mail does not support html',
+      html: `<b>${bestReleases[0].movieTitle}</b>\n
+        <p>${bestReleases[0].movieScore}</p>\n
+        <img src="${bestReleases[0].moviePoster}">`
+    })
+
+    console.log(data) // logs response data
+  } catch (error) {
+    console.log(error) // logs any error
+  }
 }

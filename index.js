@@ -1,5 +1,6 @@
 import { FILMAFFINITY_HOME_URL } from './constants.js'
-import { setStealthMode, getNewReleaseData, getLast20PlatformReleasesIds, acceptCookies } from './browserFunctions.js'
+import { setStealthMode, sendSimpleMessage, getNewReleaseData, getLast20PlatformReleasesIds, acceptCookies } from './browserFunctions.js'
+import {} from 'dotenv/config'
 
 (async () => {
   const browser = await setStealthMode()
@@ -20,6 +21,8 @@ import { setStealthMode, getNewReleaseData, getLast20PlatformReleasesIds, accept
   const sortedNetflixReleases = netflixReleases.sort((a, b) => b.movieScore - a.movieScore)
   const bestReleases = sortedNetflixReleases.filter(release => +release.movieScore > 6.5)
   console.log(bestReleases)
+
+  await sendSimpleMessage(bestReleases)
 
   await browser.close()
 })()
